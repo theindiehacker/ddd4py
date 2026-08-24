@@ -1,0 +1,20 @@
+# git フックの登録（lefthook install）は mise.toml の postinstall フックで行う
+pre-commit:
+  # 前のジョブが落ちたら後続を打ち切る（整形前のコードを検証したりテストしたりしても意味がないため）
+  piped: true
+  jobs:
+    # mise.toml で固定した gitleaks 8.30.1 をそのまま使う（バージョンの二重管理を避ける）
+    - name: gitleaks
+      # インライン allow コメント無効（--ignore-gitleaks-allow）で staged 差分をスキャンする
+      run: gitleaks git --pre-commit --redact --staged --verbose --ignore-gitleaks-allow
+
+    - name: style:fix
+      run: task style:fix
+      # 自動修正の結果をコミットに含める（含めないと修正前のコードがコミットされ style:check も落ちる）
+      stage_fixed: true
+
+    - name: style:check
+      run: task style:check
+
+    - name: test
+      run: task test
