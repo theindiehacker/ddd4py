@@ -1,21 +1,43 @@
 name: Python CI
+
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  release:
-    types: [created]
   workflow_dispatch:
+
+permissions: {}
 
 jobs:
   validation:
-    uses: microsoft/action-python/.github/workflows/validation.yml@0.7.3
-    with:
-      workdir: '.'
+    name: 検査
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-  publish:
-    uses: microsoft/action-python/.github/workflows/publish.yml@0.6.4
-    secrets:
-      PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      TEST_PYPI_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD  }}
+      - name: uv のセットアップ
+        # setup-uv は major/minor タグを publish していないため commit hash でピンする
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: 依存の同期
+        # --locked で uv.lock と pyproject.toml のズレも検出する。
+        # --all-extras は Taskfile の init と同じ経路 (mypy が sqlalchemy アダプタも検査する)。
+        run: uv sync --locked --all-extras
+
+      - name: Ruff リント
+        run: uv run ruff check .
+
+      - name: 型チェック
+        run: uv run mypy
+
+      - name: テスト
+        run: uv run pytest

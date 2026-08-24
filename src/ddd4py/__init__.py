@@ -1,3 +1,7 @@
+"""モジュラモノリス + DDD のカーネル。"""
+
+from importlib.metadata import version
+
 from ddd4py.application import ApplicationServiceLifeCycle, UnitOfWork, transactional
 from ddd4py.domain.model import (
     DomainEvent,
@@ -11,7 +15,9 @@ from ddd4py.exception import CoreCode, ErrorCode, ErrorLevel, SystemException
 from ddd4py.module import AppModule, CompositeModule
 from ddd4py.settings import BaseAppSettings, CoreSettings
 
-__version__ = "0.1.0"
+# バージョンの真実源は pyproject.toml の [project].version 一箇所。
+# 引数は import 名ではなく配布名 (どちらも ddd4py)。
+__version__ = version("ddd4py")
 
 __all__ = [
     "AppModule",
