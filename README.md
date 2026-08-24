@@ -85,6 +85,20 @@ task style:check   # ruff / mypy
 task style:check:arch   # clean-architecture による自分自身への契約検査
 ```
 
+## リリース
+
+PyPI への公開は GitHub Release をトリガーに、[Trusted Publishing (OIDC)](https://docs.pypi.org/trusted-publishers/) で自動実行される。
+API トークンはリポジトリに置かない。
+
+```bash
+# 1. pyproject.toml の version を上げて main へマージする
+# 2. その version と同じタグで Release を作る (v プレフィックス付き)
+gh release create v0.1.0 --generate-notes
+```
+
+タグと `pyproject.toml` の version が食い違うとワークフローは公開前に落ちる。
+`__version__` は `pyproject.toml` から読むため、バージョンを書き換える箇所は `pyproject.toml` の 1 行だけ。
+
 ## ライセンス
 
 MIT
