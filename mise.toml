@@ -1,0 +1,4 @@
+[tools]
+python = "3.14"
+"github:astral-sh/uv" = "latest"
+task = "latest"

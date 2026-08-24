@@ -1,0 +1,38 @@
+version: '3'
+
+tasks:
+  init:
+    desc: 開発環境のセットアップ
+    cmds:
+      - uv sync --all-extras
+      - echo "✅ done"
+
+  test:
+    desc: テスト実行
+    cmd: uv run pytest {{.CLI_ARGS}}
+
+  style:check:
+    desc: スタイル / 型の検査
+    deps: [style:check:ruff, style:check:mypy]
+    cmds:
+      - echo "✅ ddd4py"
+
+  style:check:ruff:
+    desc: Ruff リント
+    cmd: uv run ruff check .
+
+  style:check:mypy:
+    desc: 型チェック
+    cmd: uv run mypy
+
+  style:check:arch:
+    desc: 自分自身へのアーキテクチャ検査（clean-architecture のドッグフーディング）
+    cmd: uvx --from git+https://github.com/theindiehacker/clean-architecture cleanarch check
+
+  style:fix:
+    desc: スタイル自動修正
+    cmd: uv run ruff check --fix .
+
+  build:
+    desc: 配布物のビルド
+    cmd: uv build --out-dir dist
