@@ -9,7 +9,7 @@ from typing import override
 import pytest
 from di import DI, DIContainer
 
-from ddd4py import (
+from ddd4py.common import (
     ApplicationServiceLifeCycle,
     DomainEvent,
     DomainEventPublisher,
@@ -20,8 +20,8 @@ from ddd4py import (
     UnitOfWork,
     transactional,
 )
-from ddd4py.port.adapter.persistence.inmem import InMemEventStore
-from ddd4py.testing import reset_di_container
+from ddd4py.common.port.adapter.persistence.inmem import InMemEventStore
+from ddd4py.common.testing import reset_di_container
 
 
 @dataclass(init=True, unsafe_hash=True, frozen=True)

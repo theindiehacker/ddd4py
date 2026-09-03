@@ -16,13 +16,22 @@
 | inbox | `ConsumedNotification` / `ConsumedNotificationStore` / `MessageSubscriber` |
 | 発行 | `Notification` / `NotificationPublisher` / `PublishedNotificationTracker` |
 | アダプタ | `InMem*`（テスト用） / `SQLAlchemyUnitOfWork`（extras: `sqlalchemy`） |
-| 適合テスト | `ddd4py.testing.verify_*` — 自分のアダプタ実装が契約を満たすか検証する |
+| 適合テスト | `ddd4py.common.testing.verify_*` — 自分のアダプタ実装が契約を満たすか検証する |
 
 ## 導入
 
 ```bash
 uv add ddd4py
 uv add "ddd4py[sqlalchemy]"   # SQLAlchemy アダプタも使う場合
+```
+
+配布名は `ddd4py`、import 名は `ddd4py.<module>` になる。今あるモジュールは `ddd4py.common`
+（業務語彙を持たないカーネル本体）だけで、`ddd4py` 直下には `__version__` しか置かない。
+common 以外のモジュールを足しても import 名が衝突しないための空間の取り方。
+
+```python
+from ddd4py.common import DomainEvent, UnitOfWork, transactional
+from ddd4py.common.port.adapter.persistence.inmem import InMemEventStore
 ```
 
 ## トランザクションと配送の保証
@@ -41,7 +50,7 @@ consumed marker の INSERT（claim-before-process）と listener の副作用を
 ことと、受信時にそれを**確立する**ことだけ。
 
 ```python
-from ddd4py import EventContext, EventContextProvider
+from ddd4py.common import EventContext, EventContextProvider
 
 class TenantContextProvider(EventContextProvider):
     def current(self) -> EventContext:
@@ -70,7 +79,7 @@ CompositeModule([Core(), Authority(), Tenant(), AcmeOverrides()])
 自分のアダプタ実装が契約を満たすかを、**利用側の CI で**検証する。
 
 ```python
-from ddd4py.testing import verify_consumed_notification_store
+from ddd4py.common.testing import verify_consumed_notification_store
 
 def test_postgresql_consumed_notification_store(store):
     verify_consumed_notification_store(store)
