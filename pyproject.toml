@@ -41,13 +41,14 @@ dev = [
 
 # ============ 🏛 clean-architecture ============
 # 自分のカーネルを自分の検査ツールで守る (ドッグフーディング)。
-# カーネルは単一パッケージなので modules は 1 つだが、契約 (layers / 入力アダプタ) は
+# 配布モジュールは今 ddd4py.common の 1 つだけだが、契約 (layers / 入力アダプタ) は
 # 利用側プロジェクトに配るものと完全に同一のコードが生成する。
 # 実行には clean-architecture (cleanarch) が要る:
 #   uvx --from git+https://github.com/theindiehacker/clean-architecture cleanarch check
 [tool.cleanarch]
 src = "src"
-modules = ["ddd4py"]
+# 配布パッケージ (ddd4py) の下にモジュールを置くのでドットで指定する。
+modules = ["ddd4py.common"]
 layer_ignores = ["module", "settings", "exception", "event", "notification", "testing"]
 
 # ============ 🪄 Ruff ============
@@ -83,7 +84,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # 適合テストキットは利用側の pytest から呼ばれる公開 API。assert は仕様そのもの。
-"src/ddd4py/testing/**/*.py" = ["S101", "PLR2004"]
+"src/ddd4py/common/testing/**/*.py" = ["S101", "PLR2004"]
 # テストは日本語で仕様を書く (テスト名がそのまま仕様書になる)。
 "test/**/*.py" = ["S101", "SLF001", "PLR2004", "INP001", "N801", "N802", "N803", "N806", "N999", "PLC2401", "RUF001", "RUF002", "RUF003",
                        # テストは fixture / tmp_path を実行時に受け取るため型限定 import へ移せない

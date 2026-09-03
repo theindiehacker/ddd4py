@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, override
 
 import pytest
 
-from ddd4py import DomainEvent, EventContext, EventContextProvider, NullEventContextProvider, StoredEvent
-from ddd4py.port.adapter.persistence.inmem import InMemEventStore
+from ddd4py.common import DomainEvent, EventContext, EventContextProvider, NullEventContextProvider, StoredEvent
+from ddd4py.common.port.adapter.persistence.inmem import InMemEventStore
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

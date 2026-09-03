@@ -8,14 +8,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import override
 
-from ddd4py import DomainEvent, NullEventContextProvider
-from ddd4py.port.adapter.persistence.inmem import (
+from ddd4py.common import DomainEvent, NullEventContextProvider
+from ddd4py.common.port.adapter.persistence.inmem import (
     InMemConsumedNotificationStore,
     InMemEventStore,
     InMemPublishedNotificationTrackerStore,
     InMemUnitOfWork,
 )
-from ddd4py.testing import (
+from ddd4py.common.testing import (
     verify_consumed_notification_store,
     verify_event_store,
     verify_published_notification_tracker_store,
