@@ -1,6 +1,6 @@
 [project]
 name = "ddd4py"
-version = "0.1.0"
+version = "0.2.0"
 description = "モジュラモノリス + DDD のカーネル。集約・ドメインイベント・UnitOfWork・トランザクショナル outbox/inbox を業務語彙ゼロで提供する"
 readme = "README.md"
 requires-python = ">=3.14"
