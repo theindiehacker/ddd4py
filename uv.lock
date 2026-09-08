@@ -90,7 +90,7 @@ wheels = [
 
 [[package]]
 name = "ddd4py"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "di4injector" },
@@ -115,11 +115,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "di4injector", specifier = "==0.0.2" },
-    { name = "injector", specifier = "==0.22.0" },
-    { name = "pydantic-settings", specifier = "==2.14.2" },
-    { name = "pytz", specifier = "==2026.2" },
-    { name = "sqlalchemy", marker = "extra == 'sqlalchemy'", specifier = "==2.0.51" },
+    { name = "di4injector", specifier = ">=0.0.2,<0.1.0" },
+    { name = "injector", specifier = ">=0.22.0,<1.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.14.2,<3.0.0" },
+    { name = "pytz", specifier = ">=2026.2" },
+    { name = "sqlalchemy", marker = "extra == 'sqlalchemy'", specifier = ">=2.0.51,<3.0.0" },
 ]
 provides-extras = ["sqlalchemy"]
 

@@ -1,6 +1,6 @@
 [project]
 name = "ddd4py"
-version = "0.2.0"
+version = "0.2.1"
 description = "モジュラモノリス + DDD のカーネル。集約・ドメインイベント・UnitOfWork・トランザクショナル outbox/inbox を業務語彙ゼロで提供する"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -8,16 +8,18 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "taiyo tamura", email = "gtaiyou24@gmail.com" }]
 keywords = ["ddd", "modular-monolith", "hexagonal-architecture", "unit-of-work", "outbox"]
+# ライブラリなので下限 + 次のメジャーまでの範囲で指定する。
+# `==` で固定すると利用側が同じパッケージを一切上げられなくなる (再現性は利用側の lockfile が担保する)。
 dependencies = [
-    "di4injector==0.0.2",
-    "injector==0.22.0",
-    "pydantic-settings==2.14.2",
-    "pytz==2026.2",
+    "di4injector>=0.0.2,<0.1.0",
+    "injector>=0.22.0,<1.0.0",
+    "pydantic-settings>=2.14.2,<3.0.0",
+    "pytz>=2026.2",
 ]
 
 [project.optional-dependencies]
 # L1 アダプタ。カーネル本体 (L0) は永続化技術に依存しない。
-sqlalchemy = ["sqlalchemy==2.0.51"]
+sqlalchemy = ["sqlalchemy>=2.0.51,<3.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/theindiehacker/ddd4py"
