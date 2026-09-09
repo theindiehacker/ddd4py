@@ -34,11 +34,11 @@ packages = ["src/ddd4py"]
 
 [dependency-groups]
 dev = [
-    "mypy==2.1.0",
+    "mypy==2.3.1",
     "pytest==9.1.1",
     "pytest-mock==3.15.1",
-    "ruff==0.15.21",
-    "sqlalchemy==2.0.51",
+    "ruff==0.16.6",
+    "sqlalchemy==2.0.52",
 ]
 
 # ============ 🏛 clean-architecture ============
