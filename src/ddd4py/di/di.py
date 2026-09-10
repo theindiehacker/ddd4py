@@ -39,14 +39,13 @@ class Switcher:
 
     @classmethod
     def get(cls, classes: dict[Profile, Bindable], default: Bindable) -> Bindable:
-        # 環境変数はクラス変数に持たせず毎回読む。import 時に評価すると .env の読み込みや
-        # テストの monkeypatch が反映されず、本物の実装のつもりが静かに既定へ落ちる。
-        # 空文字列を落としているのは "".split(",") が [""] を返すため (未設定を空集合にする)。
+        # DI_FOR_PY="ImMem,Test" -> {"InMem", "Test"}
         actives = {name.strip() for name in os.getenv("DI_FOR_PY", "").split(",") if name.strip()}
-        for profile, a_class in classes.items():
-            if profile.match(actives):
-                return a_class
-        return default
+        matched = [(profile, a_class) for profile, a_class in classes.items() if profile.match(actives)]
+        if not matched:
+            return default
+        # 条件が多い = より具体的な束縛を優先する (宣言順ではなく具体性で決める)
+        return max(matched, key=lambda pair: len(pair[0].values))[1]
 
 
 @dataclass(init=True, frozen=False)
