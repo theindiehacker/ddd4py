@@ -64,7 +64,10 @@ class DI(Module):
         """
         return DI(
             interface,
-            {Profile(set(actives.split(","))): a_class for actives, a_class in classes.items()},
+            {
+                Profile({name.strip() for name in actives.split(",") if name.strip()}): a_class
+                for actives, a_class in classes.items()
+            },
             default,
         )
 
