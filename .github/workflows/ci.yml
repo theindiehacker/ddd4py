@@ -41,3 +41,6 @@ jobs:
 
       - name: テスト
         run: uv run pytest
+
+      - name: Import Linter
+        run: uv run lint-imports --no-logo
