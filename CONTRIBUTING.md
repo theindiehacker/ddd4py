@@ -1,4 +1,4 @@
-# Developemnt
+# Development
 
 ## Set up
 ```bash
@@ -16,7 +16,7 @@ cd path/to/対象プロジェクト
 uv add --dev --editable path/to/ddd4py   # 一度だけ
 ```
 
-## Relase
+## Release
 
 PyPI への公開は GitHub Release をトリガーに、[Trusted Publishing (OIDC)](https://docs.pypi.org/trusted-publishers/) で自動実行される。
 API トークンはリポジトリに置かない。
