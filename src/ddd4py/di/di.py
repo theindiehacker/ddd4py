@@ -42,7 +42,7 @@ class Switcher:
         # 環境変数はクラス変数に持たせず毎回読む。import 時に評価すると .env の読み込みや
         # テストの monkeypatch が反映されず、本物の実装のつもりが静かに既定へ落ちる。
         # 空文字列を落としているのは "".split(",") が [""] を返すため (未設定を空集合にする)。
-        actives = {name for name in os.getenv("DI_FOR_PY", "").split(",") if name}
+        actives = {name.strip() for name in os.getenv("DI_FOR_PY", "").split(",") if name.strip()}
         for profile, a_class in classes.items():
             if profile.match(actives):
                 return a_class
