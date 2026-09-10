@@ -7,21 +7,12 @@ from dataclasses import dataclass
 from typing import override
 
 import pytest
-from di import DI, DIContainer
 
-from ddd4py.common import (
-    ApplicationServiceLifeCycle,
-    DomainEvent,
-    DomainEventPublisher,
-    EventContext,
-    EventContextProvider,
-    EventStore,
-    NullEventContextProvider,
-    UnitOfWork,
-    transactional,
-)
+from ddd4py.common.application import ApplicationServiceLifeCycle, UnitOfWork, transactional
+from ddd4py.common.domain.model import DomainEvent, DomainEventPublisher, EventContext
+from ddd4py.common.event import EventContextProvider, EventStore, NullEventContextProvider
 from ddd4py.common.port.adapter.persistence.inmem import InMemEventStore
-from ddd4py.common.testing import reset_di_container
+from ddd4py.di import DI, DIContainer
 
 
 @dataclass(init=True, unsafe_hash=True, frozen=True)
@@ -65,8 +56,8 @@ class 記録するUnitOfWork(UnitOfWork[object]):
 
 @pytest.fixture
 def unit_of_work() -> Iterator[記録するUnitOfWork]:
-    # injector の singleton は束縛ごとにインスタンスをキャッシュするため、テストごとに破棄する
-    reset_di_container()
+    DIContainer.reset()
+    DomainEventPublisher.instance().reset()
     uow = 記録するUnitOfWork()
     event_store = InMemEventStore(NullEventContextProvider())
     DIContainer.instance().register(
@@ -76,7 +67,8 @@ def unit_of_work() -> Iterator[記録するUnitOfWork]:
         DI.of(ApplicationServiceLifeCycle, {}, ApplicationServiceLifeCycle(uow, event_store)),
     )
     yield uow
-    reset_di_container()
+    DIContainer.reset()
+    DomainEventPublisher.instance().reset()
 
 
 def test_成功したユースケースはcommitされる(unit_of_work: 記録するUnitOfWork) -> None:

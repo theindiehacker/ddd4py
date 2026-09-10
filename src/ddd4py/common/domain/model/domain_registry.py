@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
-from di import DIContainer
+from ddd4py.di import DIContainer
 
 if TYPE_CHECKING:
-    from injector import T
+    from collections.abc import Callable
+
+T = TypeVar("T")
 
 
 class DomainRegistry:
@@ -16,5 +18,5 @@ class DomainRegistry:
     """
 
     @staticmethod
-    def resolve(interface: type[T]) -> T:
+    def resolve(interface: Callable[..., T]) -> T:
         return DIContainer.instance().resolve(interface)

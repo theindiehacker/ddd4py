@@ -4,12 +4,12 @@ import functools
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any, override
 
-from di import DIContainer
 from injector import inject, singleton
 
 from ddd4py.common.application.unit_of_work import UnitOfWork
 from ddd4py.common.domain.model import DomainEvent, DomainEventPublisher, DomainEventSubscriber
 from ddd4py.common.event import EventStore
+from ddd4py.di import DIContainer
 
 if TYPE_CHECKING:
     from collections.abc import Callable

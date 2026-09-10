@@ -1,6 +1,6 @@
 [project]
 name = "ddd4py"
-version = "0.2.1"
+version = "0.3.0"
 description = "モジュラモノリス + DDD のカーネル。集約・ドメインイベント・UnitOfWork・トランザクショナル outbox/inbox を業務語彙ゼロで提供する"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -11,7 +11,6 @@ keywords = ["ddd", "modular-monolith", "hexagonal-architecture", "unit-of-work",
 # ライブラリなので下限 + 次のメジャーまでの範囲で指定する。
 # `==` で固定すると利用側が同じパッケージを一切上げられなくなる (再現性は利用側の lockfile が担保する)。
 dependencies = [
-    "di4injector>=0.0.2,<0.1.0",
     "injector>=0.22.0,<1.0.0",
     "pydantic-settings>=2.14.2,<3.0.0",
     "pytz>=2026.2",
@@ -20,6 +19,8 @@ dependencies = [
 [project.optional-dependencies]
 # L1 アダプタ。カーネル本体 (L0) は永続化技術に依存しない。
 sqlalchemy = ["sqlalchemy>=2.0.51,<3.0.0"]
+# アーキテクチャ規約 (ddd4py.linter)。実行時のカーネルには不要で、CI でしか使わない。
+linter = ["import-linter>=2.14,<3.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/theindiehacker/ddd4py"
@@ -34,6 +35,9 @@ packages = ["src/ddd4py"]
 
 [dependency-groups]
 dev = [
+    # extras の linter と同じもの。extras は利用側への配り方、こちらは自分の CI 用
+    # (uv sync は既定で extras を入れないため、両方に要る)。
+    "import-linter==2.15",
     "mypy==2.3.1",
     "pytest==9.1.1",
     "pytest-mock==3.15.1",
@@ -41,17 +45,36 @@ dev = [
     "sqlalchemy==2.0.52",
 ]
 
-# ============ 🏛 clean-architecture ============
-# 自分のカーネルを自分の検査ツールで守る (ドッグフーディング)。
-# 配布モジュールは今 ddd4py.common の 1 つだけだが、契約 (layers / 入力アダプタ) は
-# 利用側プロジェクトに配るものと完全に同一のコードが生成する。
-# 実行には clean-architecture (cleanarch) が要る:
-#   uvx --from git+https://github.com/theindiehacker/clean-architecture cleanarch check
-[tool.cleanarch]
-src = "src"
-# 配布パッケージ (ddd4py) の下にモジュールを置くのでドットで指定する。
-modules = ["ddd4py.common"]
-layer_ignores = ["module", "settings", "exception", "event", "notification", "testing"]
+# ============ 🏛 import-linter ============
+[tool.importlinter]
+root_packages = ["ddd4py"]
+
+[[tool.importlinter.contracts]]
+name = "ヘキサゴナルアーキテクチャの依存違反を禁止"
+type = "layers"
+containers = ["ddd4py.common"]
+# 上ほど上位の層。a : b = 同一層・相互 import 可能
+layers = [
+    "port",
+    "application : event : notification",
+    "domain",
+    "exception",
+]
+exhaustive = false  # layers で定義した層以外は違反チェックしない
+
+[[tool.importlinter.contracts]]
+name = "ドメイン層の依存違反を禁止"
+type = "protected"
+protected_modules = ["ddd4py.common.domain"]
+# ドメイン層は以下からのみインポートできる
+allowed_importers = [
+    "ddd4py.common.application",
+    "ddd4py.common.event",
+    "ddd4py.common.notification",
+    "ddd4py.common.port.adapter.persistence",
+    # 配布する適合テストキット。ポートの契約を書くためにドメイン型を参照する
+    "ddd4py.common.testing",
+]
 
 # ============ 🪄 Ruff ============
 # カーネルの規約は利用側プロジェクトに配る規約と揃える (自分が守れない規約は配れない)。
