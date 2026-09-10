@@ -34,11 +34,11 @@ packages = ["src/ddd4py"]
 
 [dependency-groups]
 dev = [
-    "mypy==2.1.0",
+    "mypy==2.3.1",
     "pytest==9.1.1",
     "pytest-mock==3.15.1",
-    "ruff==0.15.21",
-    "sqlalchemy==2.0.51",
+    "ruff==0.16.6",
+    "sqlalchemy==2.0.52",
 ]
 
 # ============ 🏛 clean-architecture ============
@@ -71,6 +71,8 @@ ignore = [
     "FIX002",
     "N818",
     "PLR0913",
+    # 引数の数は PLR0913 と同じ理由で数えない (DI で協力者を受け取る設計が主)。
+    "PLR0917",
     "RUF012",
     "TRY003",
     "FBT001",
@@ -82,6 +84,8 @@ ignore = [
     "TD",
     "ARG",
     "EM",
+    # 著作権表記はファイル冒頭ではなくリポジトリ直下の LICENSE で一元管理する。
+    "CPY001",
 ]
 
 [tool.ruff.lint.per-file-ignores]
