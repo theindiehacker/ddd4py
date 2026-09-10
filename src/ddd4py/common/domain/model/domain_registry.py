@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TypeVar
 
-from di import DIContainer
+from ddd4py.di import DIContainer
 
-if TYPE_CHECKING:
-    from injector import T
+T = TypeVar("T")
 
 
 class DomainRegistry:

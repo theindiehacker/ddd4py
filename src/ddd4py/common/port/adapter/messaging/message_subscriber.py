@@ -4,11 +4,10 @@ import abc
 import logging
 from typing import TYPE_CHECKING
 
-from di import DIContainer
-
 from ddd4py.common.application import ApplicationServiceLifeCycle, EventContext
 from ddd4py.common.event import EventContextProvider
 from ddd4py.common.notification import ConsumedNotification, ConsumedNotificationStore
+from ddd4py.di import DIContainer
 
 if TYPE_CHECKING:
     from ddd4py.common.port.adapter.messaging.exchange_listener import ExchangeListener

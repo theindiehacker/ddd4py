@@ -1,37 +1,5 @@
-"""モジュラモノリス + DDD のカーネル (共通モジュール)。"""
+"""モジュラモノリス + DDD のカーネル (共通モジュール)。
 
-from ddd4py.common.application import ApplicationServiceLifeCycle, UnitOfWork, transactional
-from ddd4py.common.domain.model import (
-    DomainEvent,
-    DomainEventPublisher,
-    DomainEventSubscriber,
-    DomainRegistry,
-    EventContext,
-)
-from ddd4py.common.event import EventContextProvider, EventStore, NullEventContextProvider, StoredEvent
-from ddd4py.common.exception import CoreCode, ErrorCode, ErrorLevel, SystemException
-from ddd4py.common.module import AppModule, CompositeModule
-from ddd4py.common.settings import BaseAppSettings, CoreSettings
-
-__all__ = [
-    "AppModule",
-    "ApplicationServiceLifeCycle",
-    "BaseAppSettings",
-    "CompositeModule",
-    "CoreCode",
-    "CoreSettings",
-    "DomainEvent",
-    "DomainEventPublisher",
-    "DomainEventSubscriber",
-    "DomainRegistry",
-    "ErrorCode",
-    "ErrorLevel",
-    "EventContext",
-    "EventContextProvider",
-    "EventStore",
-    "NullEventContextProvider",
-    "StoredEvent",
-    "SystemException",
-    "UnitOfWork",
-    "transactional",
-]
+公開 API はここでは再エクスポートしない。利用側は ddd4py.common.application.transactional の
+ように、責務のあるモジュールを直接指して import する (どの層に属する型なのかを import 文に残す)。
+"""

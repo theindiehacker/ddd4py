@@ -31,10 +31,4 @@ class BaseAppSettings(BaseSettings):
 class CoreSettings(BaseAppSettings):
     """カーネルが読む最小限の設定。業務設定は利用側が BaseAppSettings を継承して定義する。"""
 
-    di_profile_actives: str = Field(default="", validation_alias="DI_PROFILE_ACTIVES")
     notification_publish_to: str = Field(default="notifications", validation_alias="NOTIFICATION_PUBLISH_TO")
-
-    @property
-    def profiles(self) -> set[str]:
-        """DI_PROFILE_ACTIVES をカンマ区切りの set に変換する"""
-        return {p.strip() for p in self.di_profile_actives.split(",") if p.strip()}
