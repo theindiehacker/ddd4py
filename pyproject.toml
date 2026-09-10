@@ -20,7 +20,7 @@ dependencies = [
 # L1 アダプタ。カーネル本体 (L0) は永続化技術に依存しない。
 sqlalchemy = ["sqlalchemy>=2.0.51,<3.0.0"]
 # アーキテクチャ規約 (ddd4py.linter)。実行時のカーネルには不要で、CI でしか使わない。
-linter = ["import-linter>=2.13,<3.0.0"]
+linter = ["import-linter>=2.14,<3.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/theindiehacker/ddd4py"
