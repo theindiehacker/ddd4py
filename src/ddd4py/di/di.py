@@ -55,10 +55,10 @@ class DI(Module):
 
     interface: Callable[..., Any]
     classes: dict[Profile, Bindable]
-    default: Bindable | None
+    default: Bindable
 
     @staticmethod
-    def of(interface: Callable[..., T], classes: dict[str, Bindable], default: Bindable | None = None) -> DI:
+    def of(interface: Callable[..., T], classes: dict[str, Bindable], default: Bindable) -> DI:
         """プロファイル名 (カンマ区切り) から束縛先への対応で DI を組み立てる。
 
             DI.of(UnitOfWork, {"postgres": PostgresUnitOfWork}, InMemUnitOfWork())
