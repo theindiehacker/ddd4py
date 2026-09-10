@@ -49,7 +49,7 @@ class Switcher:
         return default
 
 
-@dataclass(init=True, frozen=False, unsafe_hash=True)
+@dataclass(init=True, frozen=False)
 class DI(Module):
     """1 つの interface に対する束縛の宣言。DIContainer へ register して使う。"""
 
