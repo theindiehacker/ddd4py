@@ -1,32 +1,18 @@
 name: "🧹 actionlint"
 
-# GitHub Actions のワークフロー定義を actionlint で構文チェックする。
-#
-# 元は org 共通リポジトリ (github-workflows) の必須ワークフローだった。必須ワークフローは
-# on: のフィルタが無視され全 PR で起動されるため、対象外の PR を skip する判定を
-# dorny/paths-filter で job 内に持っていたが、自リポジトリ所有になり不要になった。
-# かわりに on.pull_request.paths で絞る形にもしない。対象外の PR ではチェック自体が
-# 報告されず、必須ステータスチェックに指定すると PR が永久に pending になるため。
-# 検査対象は .github/workflows/ の数ファイルのみで実行も数秒のため、常に検査する。
-#
-# actionlint は PATH 上の shellcheck / pyflakes を自動起動し、run: ブロックの
-# シェルスクリプトも検査する (ubuntu-latest には両方プリインストールされている)。
-# 本リポジトリに .sh は 1 つも無いため、独立した shellcheck ワークフローは持たない。
+# ワークフロー定義の構文を検査する (run: 内のシェルは内蔵の shellcheck が見る)。
 on:
   pull_request:
     branches: [ main ]
 
-# 既定は無権限。必要な job にだけ最小権限を与える。
 permissions: {}
 
-# 同一 PR に連投された run のみ束ねて追い越しキャンセル
 concurrency:
   group: actionlint-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   lint:
-    # job 名がそのまま PR のチェック名になる (必須ステータスチェックの登録名)。変更しない。
     name: "workflow 構文チェック"
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -48,8 +34,6 @@ jobs:
           set -euo pipefail
           ARCHIVE="actionlint_${VERSION}_linux_amd64.tar.gz"
           curl -sSfL -o "$ARCHIVE" "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/${ARCHIVE}"
-
-          # SHA-256 検証（改ざん・破損を検知）
           echo "${SHA256}  ${ARCHIVE}" | sha256sum -c -
 
           sudo tar -xz -C /usr/local/bin -f "$ARCHIVE" actionlint

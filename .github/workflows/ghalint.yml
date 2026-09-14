@@ -1,28 +1,18 @@
 name: "🛡️ ghalint"
 
-# permissions 未設定・アクションの SHA 未固定など、構文ではなくセキュリティ観点の
-# ポリシー違反を検出する。
-#
-# 元は org 共通リポジトリ (github-workflows) の必須ワークフローで、対象外の PR を skip する
-# 判定を dorny/paths-filter で job 内に持っていたが、自リポジトリ所有になり不要になった。
-# on.pull_request.paths で絞る形にもしない (対象外の PR でチェックが報告されず、
-# 必須ステータスチェックに指定すると PR が永久に pending になるため)。
-# なお ghalint run は個別ファイル指定ができず、実行時は常に .github/workflows/ 全体が対象になる。
+# ワークフローのセキュリティポリシー違反 (permissions 未設定・SHA 未固定など) を検出する。
 on:
   pull_request:
     branches: [ main ]
 
-# 既定は無権限。必要な job にだけ最小権限を与える。
 permissions: {}
 
-# 同一 PR に連投された run のみ束ねて追い越しキャンセル
 concurrency:
   group: ghalint-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   lint:
-    # job 名がそのまま PR のチェック名になる (必須ステータスチェックの登録名)。変更しない。
     name: "workflow セキュリティポリシーチェック"
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -44,8 +34,6 @@ jobs:
           set -euo pipefail
           ARCHIVE="ghalint_${VERSION}_linux_amd64.tar.gz"
           curl -sSfL -o "$ARCHIVE" "https://github.com/suzuki-shunsuke/ghalint/releases/download/v${VERSION}/${ARCHIVE}"
-
-          # SHA-256 検証（改ざん・破損を検知）
           echo "${SHA256}  ${ARCHIVE}" | sha256sum -c -
 
           sudo tar -xz -C /usr/local/bin -f "$ARCHIVE" ghalint

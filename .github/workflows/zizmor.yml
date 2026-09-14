@@ -1,28 +1,18 @@
 name: "🛡️ zizmor"
 
-# GitHub Actions のワークフロー / action 定義を zizmor で静的解析し、
-# severity HIGH 以上の検出でマージをブロックする。
-#
-# 元は org 共通リポジトリ (github-workflows) の必須ワークフローで、対象外の PR を skip する
-# 判定を dorny/paths-filter で job 内に持っていたが、自リポジトリ所有になり不要になった。
-# on.pull_request.paths で絞る形にもしない (対象外の PR でチェックが報告されず、
-# 必須ステータスチェックに指定すると PR が永久に pending になるため)。
-# 対象は .github/workflows/ の数ファイルのみのため、差分で絞らず常に repo 全体を走査する。
+# ワークフロー / action 定義を静的解析し、severity HIGH 以上でマージをブロックする。
 on:
   pull_request:
     branches: [ main ]
 
-# 既定は無権限。必要な job にだけ最小権限を与える。
 permissions: {}
 
-# 同一 PR に連投された run のみ束ねて追い越しキャンセル
 concurrency:
   group: zizmor-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   scan:
-    # job 名がそのまま PR のチェック名になる (必須ステータスチェックの登録名)。変更しない。
     name: "GitHub Actions 設定をスキャン"
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -35,11 +25,7 @@ jobs:
           persist-credentials: false
 
       - name: "インライン ignore コメントの禁止"
-        # zizmor の --no-ignores は .github/zizmor.yml による抑制まで無効化してしまうため、
-        # インラインコメントのトークンの存在自体を禁止する（抑制は .github/zizmor.yml に限定する）。
-        # .github/zizmor.yml は org ルールセット「セキュリティ設定変更の承認必須化」の対象であり、
-        # 変更にはセキュリティチームの承認が要る。インライン抑制はそのゲートを迂回してしまう。
-        # 検査対象は zizmor がスキャンし得る Actions 関連ファイルのみ（ドキュメント等の誤検知を避ける）
+        # 抑制は承認必須の .github/zizmor.yml に限定する (インラインは承認ゲートを迂回するため禁止)。
         shell: bash
         run: |
           set -euo pipefail
@@ -60,8 +46,6 @@ jobs:
           set -euo pipefail
           ARCHIVE="zizmor-x86_64-unknown-linux-gnu.tar.gz"
           curl -sSfL -o "$ARCHIVE" "https://github.com/zizmorcore/zizmor/releases/download/v${VERSION}/${ARCHIVE}"
-
-          # SHA-256 検証（改ざん・破損を検知）
           echo "${SHA256}  ${ARCHIVE}" | sha256sum -c -
 
           sudo tar -xz -C /usr/local/bin -f "$ARCHIVE" zizmor
@@ -75,9 +59,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # 設定ファイルの自動探索はリポジトリ直下や入力ファイルの祖先ディレクトリの zizmor.yml / zizmor.yaml
-          # にも及び、承認必須の対象外パスから検出を抑制できてしまうため、
-          # 承認必須の .github/zizmor.yml に固定する（未作成なら設定なしで実行する）
+          # 設定は承認必須の .github/zizmor.yml に固定する (自動探索だと承認外のパスから抑制できてしまう)。
           config_args=(--no-config)
           if [ -f .github/zizmor.yml ]; then
             config_args=(--config .github/zizmor.yml)

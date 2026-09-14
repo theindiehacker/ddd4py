@@ -1,25 +1,18 @@
 name: "🛡️ Gitleaks"
 
-# PR の差分にシークレットが混入していないかを Gitleaks で検知する。
-#
-# lefthook の pre-commit でもローカル検知しているが、--no-verify で迂回できるうえ
-# fork からの PR には効かないため、CI 側にも同じ検知を置く。
-# main への直 push は org ルールセットで禁止されているため、push トリガーは持たない。
+# PR の差分にシークレットが混入していないか検知する。
 on:
   pull_request:
     branches: [ main ]
 
-# 既定は無権限。必要な job にだけ最小権限を与える。
 permissions: {}
 
-# 同一 PR に連投された run のみ束ねて追い越しキャンセル
 concurrency:
   group: gitleaks-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   scan:
-    # job 名がそのまま PR のチェック名になる (必須ステータスチェックの登録名)。変更しない。
     name: "シークレット検知"
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -42,8 +35,6 @@ jobs:
           set -euo pipefail
           ARCHIVE="gitleaks_${VERSION}_linux_x64.tar.gz"
           curl -sSfL -o "$ARCHIVE" "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/${ARCHIVE}"
-
-          # SHA-256 検証（改ざん・破損を検知）
           echo "${SHA256}  ${ARCHIVE}" | sha256sum -c -
 
           sudo tar -xz -C /usr/local/bin -f "$ARCHIVE" gitleaks

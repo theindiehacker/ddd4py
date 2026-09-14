@@ -1,27 +1,18 @@
 name: "🛡️ Semgrep"
 
-# アプリケーションコードを Semgrep CE（SAST, ルールセット p/default・severity ERROR のみ）でスキャンする。
-# --baseline-commit により「PR で新規に増えた検出」のみを対象とするため、
-# 既存コードの検出が無関係な PR をブロックすることはない。
-# 誤検知は承認必須の .semgrepignore で抑制する（インライン nosemgrep は下記 --disable-nosem で無効化）。
-#
-# ruff の select = ["ALL"] は flake8-bandit (S) を含むため一部は重複するが、
-# ruff は AST の単発マッチのみで taint / dataflow を追わないため、検知層としては別物。
+# アプリケーションコードを SAST で検査する (p/default・severity ERROR、PR で増えた検出のみ)。
 on:
   pull_request:
     branches: [ main ]
 
-# 既定は無権限。必要な job にだけ最小権限を与える。
 permissions: {}
 
-# 同一 PR に連投された run のみ束ねて追い越しキャンセル
 concurrency:
   group: semgrep-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   scan:
-    # job 名がそのまま PR のチェック名になる (必須ステータスチェックの登録名)。変更しない。
     name: "アプリケーションコードをスキャン"
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -43,8 +34,7 @@ jobs:
           BASELINE: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
-          # --disable-nosem: インライン nosemgrep コメントを無効化（抑制は承認必須の .semgrepignore に限定する）
-          # --json-output: stdout のテキスト出力は保ったまま、annotation 生成用の JSON を併出力する
+          # --disable-nosem で抑制を承認必須の .semgrepignore に限定し、--json-output で annotation 用に併出力する。
           rc=0
           semgrep scan \
             --config p/default \

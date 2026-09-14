@@ -1,29 +1,18 @@
 name: "🛡️ Trivy スキャン"
 
-# 依存パッケージ (uv.lock) の脆弱性と IaC の設定ミスを Trivy で検知する。
-# main への直 push は org ルールセットで禁止されているため、push トリガーは持たない。
-#
-# 元は org 共通リポジトリ (github-workflows) の必須ワークフローで、
-#   - 対象 repo から inputs を受け取れないため Dockerfile を自動検出して image もスキャンする job
-#   - repo 直下の trivy.yaml を読んで severity を組み立てる job
-# を持っていたが、どちらも「org 横断で 1 つの定義を使い回す」ための機構だった。
-# 本リポジトリは純 Python で Dockerfile を持たず、設定も自リポジトリ内で直接書けるため、
-# fs スキャン 1 job に縮約している。
+# 依存パッケージ (uv.lock) の脆弱性と IaC の設定ミスを検知する。
 on:
   pull_request:
     branches: [ main ]
 
-# 既定は無権限。必要な job にだけ最小権限を与える。
 permissions: {}
 
-# 同一 PR に連投された run のみ束ねて追い越しキャンセル
 concurrency:
   group: trivy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   scan-fs:
-    # job 名がそのまま PR のチェック名になる (必須ステータスチェックの登録名)。変更しない。
     name: "依存パッケージ / IaC をスキャン"
     runs-on: ubuntu-latest
     timeout-minutes: 10  # Trivy DB ダウンロードの遅延でハングするのを防ぐ
@@ -36,10 +25,7 @@ jobs:
           persist-credentials: false
 
       - name: "インライン ignore コメントの禁止"
-        # Trivy にはインライン ignore を無効化するオプションがないため、トークンの存在自体を禁止する。
-        # .trivyignore / .trivyignore.yaml は org ルールセット「セキュリティ設定変更の承認必須化」の
-        # 対象であり変更にはセキュリティチームの承認が要る。インライン抑制はそのゲートを迂回してしまう。
-        # トークンを分割して組み立てているのは、このファイル自身が検知されるのを防ぐため
+        # 抑制は承認必須の .trivyignore に限定する (トークンを分割組み立てするのは自己検知を避けるため)。
         shell: bash
         run: |
           set -euo pipefail
@@ -58,10 +44,7 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
-          # vuln は uv.lock を解析する (dev 依存は Trivy の既定で対象外。
-          # 配布物に入らない mypy / pytest / ruff の CVE で PR を止めないため --include-dev-deps は付けない)。
-          # misconfig は現状 IaC が無いため常に 0 件だが、将来 Dockerfile 等を足した際に自動で効く。
-          # secret は Gitleaks と二重検出になるため有効にしない。
+          # dev 依存は Trivy の既定で対象外のまま。secret は Gitleaks と二重になるため有効にしない。
           scanners: vuln,misconfig
           # org 共通ワークフローの下限をそのまま採用する
           severity: CRITICAL,HIGH
@@ -80,8 +63,7 @@ jobs:
           trivy convert --format table --output trivy-fs.txt trivy-fs.json
           cat trivy-fs.txt
 
-          # 検出箇所を PR に annotation 表示する。misconfig は行番号付き、
-          # vuln は行番号を持たないため Target（ロックファイル等）単位で出力する
+          # 検出箇所を PR に annotation 表示する (vuln は行番号を持たないため Target 単位)。
           jq -r '
             .Results[]? | .Target as $t |
             ((.Vulnerabilities // [])[]
