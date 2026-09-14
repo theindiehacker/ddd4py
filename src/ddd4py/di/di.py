@@ -60,7 +60,7 @@ class DI(Module):
     def of(interface: Callable[..., T], classes: dict[str, Bindable], default: Bindable) -> DI:
         """プロファイル名 (カンマ区切り) から束縛先への対応で DI を組み立てる。
 
-            DI.of(UnitOfWork, {"postgres": PostgresUnitOfWork}, InMemUnitOfWork())
+        DI.of(UnitOfWork, {"postgres": PostgresUnitOfWork}, InMemUnitOfWork())
         """
         return DI(
             interface,

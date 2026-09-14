@@ -47,6 +47,7 @@ class ArchitectureContract(Contract):
 
 class Hexagonal(ArchitectureContract):
     """ヘキサゴナルアーキテクチャ(モジュール内部に関する規約)"""
+
     type_name = "architecture.hexagonal"
 
     @property
@@ -90,6 +91,7 @@ class Hexagonal(ArchitectureContract):
 
 class ModularMonolithic(ArchitectureContract):
     """モジュラモノリスアーキテクチャ(モジュール境界に関する規約)"""
+
     type_name = "architecture.modularmonolithic"
 
     class RootPackagesContract(Contract):
@@ -116,8 +118,9 @@ class ModularMonolithic(ArchitectureContract):
         def render_broken_contract(self, check: ContractCheck) -> None:
             for name in check.metadata["unregistered"]:
                 path = check.metadata["directory"] / name
-                output.print_error(f"- {path} が root_packages に未登録 (追記すれば全規約が自動で適用される)",
-                                   bold=False)
+                output.print_error(
+                    f"- {path} が root_packages に未登録 (追記すれば全規約が自動で適用される)", bold=False
+                )
             output.new_line()
 
     @property

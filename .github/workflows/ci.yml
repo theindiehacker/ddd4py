@@ -33,6 +33,10 @@ jobs:
         # --all-extras は Taskfile の init と同じ経路 (mypy が sqlalchemy アダプタも検査する)。
         run: uv sync --locked --all-extras
 
+      - name: フォーマット検査
+        # 整形は ruff format が唯一の基準。差分があれば `task style:fix` で解消する。
+        run: uv run ruff format --check .
+
       - name: Ruff リント
         run: uv run ruff check .
 

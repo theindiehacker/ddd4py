@@ -14,6 +14,7 @@ tasks:
   style:check:
     desc: スタイル / 型の検査
     cmds:
+      - uv run ruff format --check .
       - uv run ruff check .
       - uv run mypy
       - uv run lint-imports --no-logo
@@ -21,7 +22,10 @@ tasks:
 
   style:fix:
     desc: スタイル自動修正
-    cmd: uv run ruff check --fix .
+    cmds:
+      # 整形してから lint を自動修正する (整形で行が変わると lint の指摘位置もずれるため)
+      - uv run ruff format .
+      - uv run ruff check --fix .
 
   build:
     desc: 配布物のビルド

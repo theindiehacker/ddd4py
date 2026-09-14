@@ -1,0 +1,69 @@
+name: "🛡️ zizmor"
+
+# ワークフロー / action 定義を静的解析し、severity HIGH 以上でマージをブロックする。
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions: {}
+
+concurrency:
+  group: zizmor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: "GitHub Actions 設定をスキャン"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "インライン ignore コメントの禁止"
+        # 抑制は承認必須の .github/zizmor.yml に限定する (インラインは承認ゲートを迂回するため禁止)。
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -InE 'zizmor:[[:space:]]*ignore' -- \
+            ':(glob).github/workflows/*.yml' ':(glob).github/workflows/*.yaml' \
+            ':(glob)**/action.yml' ':(glob)**/action.yaml'; then
+            echo "::error::インラインの ignore コメントは使用できません。.github/zizmor.yml で抑制してください（変更にはセキュリティチームの承認が必要）"
+            exit 1
+          fi
+
+      - name: "Install zizmor"
+        shell: bash
+        env:
+          # renovate: datasource=github-release-attachments depName=zizmorcore/zizmor
+          VERSION: 1.27.0
+          SHA256: 277f2bd8fd37cf60c42ab7afca6faa884e65440fa31e02b44bdaae60f62a358f
+        run: |
+          set -euo pipefail
+          ARCHIVE="zizmor-x86_64-unknown-linux-gnu.tar.gz"
+          curl -sSfL -o "$ARCHIVE" "https://github.com/zizmorcore/zizmor/releases/download/v${VERSION}/${ARCHIVE}"
+          echo "${SHA256}  ${ARCHIVE}" | sha256sum -c -
+
+          sudo tar -xz -C /usr/local/bin -f "$ARCHIVE" zizmor
+          rm -f "$ARCHIVE"
+          zizmor --version
+
+      - name: "zizmor スキャン"
+        shell: bash
+        env:
+          # GH_TOKEN があると online audit（impostor-commit / known-vulnerable-actions 等）も有効になる
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # 設定は承認必須の .github/zizmor.yml に固定する (自動探索だと承認外のパスから抑制できてしまう)。
+          config_args=(--no-config)
+          if [ -f .github/zizmor.yml ]; then
+            config_args=(--config .github/zizmor.yml)
+          fi
+
+          # --format github: 検出箇所を PR に annotation 表示する
+          zizmor --no-progress --format github --min-severity high "${config_args[@]}" .
