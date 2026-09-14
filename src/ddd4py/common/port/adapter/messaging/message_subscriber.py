@@ -43,8 +43,9 @@ class MessageSubscriber(abc.ABC):
     async def receive(self, message: dict) -> None:
         pass
 
-    async def _dispatch(self, publisher_name: str | None, event_type: str | None,
-                        text_message: str, notification_id: int | None) -> None:
+    async def _dispatch(
+        self, publisher_name: str | None, event_type: str | None, text_message: str, notification_id: int | None
+    ) -> None:
         """受信イベントの文脈を確立し、listener ごとの transactional inbox で転送する。
 
         1 envelope = 1 文脈。listener ごとにトランザクションを開始し、consumed marker の INSERT
@@ -72,8 +73,7 @@ class MessageSubscriber(abc.ABC):
             for listener in self.listeners:
                 if not self.__listens(listener, publisher_name, event_type):
                     continue
-                error = await self.__deliver(life_cycle, store, listener, event_type,
-                                             text_message, notification_id)
+                error = await self.__deliver(life_cycle, store, listener, event_type, text_message, notification_id)
                 if error is not None:
                     errors.append(error)
         if errors:
@@ -82,13 +82,19 @@ class MessageSubscriber(abc.ABC):
 
     @staticmethod
     def __listens(listener: ExchangeListener, publisher_name: str | None, event_type: str | None) -> bool:
-        return (listener.publisher_name() == publisher_name
-                and event_type is not None
-                and listener.listens_to(event_type))
+        return (
+            listener.publisher_name() == publisher_name and event_type is not None and listener.listens_to(event_type)
+        )
 
-    async def __deliver(self, life_cycle: ApplicationServiceLifeCycle, store: ConsumedNotificationStore,
-                        listener: ExchangeListener, event_type: str, text_message: str,
-                        notification_id: int | None) -> Exception | None:
+    async def __deliver(
+        self,
+        life_cycle: ApplicationServiceLifeCycle,
+        store: ConsumedNotificationStore,
+        listener: ExchangeListener,
+        event_type: str,
+        text_message: str,
+        notification_id: int | None,
+    ) -> Exception | None:
         """1 listener 分の claim + 副作用を単一トランザクションで処理する。失敗時は例外を返す。"""
         # dedup キーの listener 次元は完全修飾名にする。単純クラス名だと別モジュールの同名 listener と
         # 衝突して片方が静かに skip される (リネーム時は既存 marker が orphan 化して再処理が走るが、

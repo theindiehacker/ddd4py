@@ -44,10 +44,10 @@ unit_of_work = DIContainer.instance().resolve(UnitOfWork)
 ```python
 from injector import inject
 
+
 class 〇〇ApplicationService:
     @inject
-    def __init__(self, 〇〇_repository: 〇〇Repository) -> None:
-        ...
+    def __init__(self, 〇〇_repository: 〇〇Repository) -> None: ...
 ```
 
 ```python

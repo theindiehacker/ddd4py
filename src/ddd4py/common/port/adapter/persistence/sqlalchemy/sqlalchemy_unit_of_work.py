@@ -29,11 +29,13 @@ class SQLAlchemyUnitOfWork(UnitOfWork[DeclarativeMeta]):
     def __init__(self, engine: Engine, session_preparer: SessionPreparer | None = None):
         self.__engine = engine
         self.__session_preparer = session_preparer or NullSessionPreparer()
-        self.__scoped_session = scoped_session(sessionmaker(
-            bind=engine,
-            autocommit=False,
-            expire_on_commit=True,
-        ))
+        self.__scoped_session = scoped_session(
+            sessionmaker(
+                bind=engine,
+                autocommit=False,
+                expire_on_commit=True,
+            )
+        )
 
     @property
     def engine(self) -> Engine:

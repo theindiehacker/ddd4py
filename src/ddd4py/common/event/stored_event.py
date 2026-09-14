@@ -32,8 +32,7 @@ class StoredEvent:
         # fullmatch で全体一致を要求し、末尾改行・余剰文字の混入を弾く。
         if _TYPE_PATTERN.fullmatch(self.type) is None:
             raise ValueError(
-                f"Invalid event type: '{self.type}'. "
-                "Expected format: '<publisher>.<DomainEventClassName>.<version>'.",
+                f"Invalid event type: '{self.type}'. Expected format: '<publisher>.<DomainEventClassName>.<version>'.",
             )
         if not self.partition_key:
             raise ValueError("partition_key must not be empty")
