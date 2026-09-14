@@ -1,0 +1,102 @@
+name: "🛡️ Trivy スキャン"
+
+# 依存パッケージ (uv.lock) の脆弱性と IaC の設定ミスを Trivy で検知する。
+# main への直 push は org ルールセットで禁止されているため、push トリガーは持たない。
+#
+# 元は org 共通リポジトリ (github-workflows) の必須ワークフローで、
+#   - 対象 repo から inputs を受け取れないため Dockerfile を自動検出して image もスキャンする job
+#   - repo 直下の trivy.yaml を読んで severity を組み立てる job
+# を持っていたが、どちらも「org 横断で 1 つの定義を使い回す」ための機構だった。
+# 本リポジトリは純 Python で Dockerfile を持たず、設定も自リポジトリ内で直接書けるため、
+# fs スキャン 1 job に縮約している。
+on:
+  pull_request:
+    branches: [ main ]
+
+# 既定は無権限。必要な job にだけ最小権限を与える。
+permissions: {}
+
+# 同一 PR に連投された run のみ束ねて追い越しキャンセル
+concurrency:
+  group: trivy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan-fs:
+    # job 名がそのまま PR のチェック名になる (必須ステータスチェックの登録名)。変更しない。
+    name: "依存パッケージ / IaC をスキャン"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10  # Trivy DB ダウンロードの遅延でハングするのを防ぐ
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "インライン ignore コメントの禁止"
+        # Trivy にはインライン ignore を無効化するオプションがないため、トークンの存在自体を禁止する。
+        # .trivyignore / .trivyignore.yaml は org ルールセット「セキュリティ設定変更の承認必須化」の
+        # 対象であり変更にはセキュリティチームの承認が要る。インライン抑制はそのゲートを迂回してしまう。
+        # トークンを分割して組み立てているのは、このファイル自身が検知されるのを防ぐため
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN='trivy:''ignore'
+          if git grep -InF "${TOKEN}" -- .; then
+            echo "::error::インライン ignore コメント（${TOKEN}）は使用できません。.trivyignore / .trivyignore.yaml で抑制してください（変更にはセキュリティチームの承認が必要）"
+            exit 1
+          fi
+
+      - name: "Trivy fs スキャン"
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          # レジストリのレート制限で落ちないよう、公式配布先 3 箇所をフォールバック指定する
+          TRIVY_DB_REPOSITORY: mirror.gcr.io/aquasec/trivy-db:2,ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: mirror.gcr.io/aquasec/trivy-java-db:1,ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db:1
+        with:
+          scan-type: fs
+          scan-ref: .
+          # vuln は uv.lock を解析する (dev 依存は Trivy の既定で対象外。
+          # 配布物に入らない mypy / pytest / ruff の CVE で PR を止めないため --include-dev-deps は付けない)。
+          # misconfig は現状 IaC が無いため常に 0 件だが、将来 Dockerfile 等を足した際に自動で効く。
+          # secret は Gitleaks と二重検出になるため有効にしない。
+          scanners: vuln,misconfig
+          # org 共通ワークフローの下限をそのまま採用する
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true  # 修正パッチがないものは除外 (vuln のみに作用)
+          exit-code: 1
+          # SARIF ではなく JSON で出力し、次の step で table 表示と PR への annotation 生成を行う
+          format: json
+          output: trivy-fs.json
+
+      - name: "スキャン結果を log と annotation に表示"
+        # exit-code=1 で Trivy が落ちても結果は出す (CI の Details で即確認するため)
+        if: always() && hashFiles('trivy-fs.json') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          trivy convert --format table --output trivy-fs.txt trivy-fs.json
+          cat trivy-fs.txt
+
+          # 検出箇所を PR に annotation 表示する。misconfig は行番号付き、
+          # vuln は行番号を持たないため Target（ロックファイル等）単位で出力する
+          jq -r '
+            .Results[]? | .Target as $t |
+            ((.Vulnerabilities // [])[]
+              | "::error file=\($t)::trivy (\(.VulnerabilityID)): \(.PkgName)@\(.InstalledVersion) — \(.Title // .VulnerabilityID)"),
+            ((.Misconfigurations // [])[]
+              | "::error file=\($t),line=\(.CauseMetadata.StartLine // 1)::trivy (\(.AVDID // .ID)): \(.Title)")
+          ' trivy-fs.json
+
+      - name: "スキャン結果を artifact に保存"
+        # log は retention に依存するため、後追い調査用に artifact でも残す
+        if: always() && hashFiles('trivy-fs.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-fs
+          path: |
+            trivy-fs.txt
+            trivy-fs.json
+          retention-days: 30

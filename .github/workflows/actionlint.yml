@@ -1,0 +1,64 @@
+name: "🧹 actionlint"
+
+# GitHub Actions のワークフロー定義を actionlint で構文チェックする。
+#
+# 元は org 共通リポジトリ (github-workflows) の必須ワークフローだった。必須ワークフローは
+# on: のフィルタが無視され全 PR で起動されるため、対象外の PR を skip する判定を
+# dorny/paths-filter で job 内に持っていたが、自リポジトリ所有になり不要になった。
+# かわりに on.pull_request.paths で絞る形にもしない。対象外の PR ではチェック自体が
+# 報告されず、必須ステータスチェックに指定すると PR が永久に pending になるため。
+# 検査対象は .github/workflows/ の数ファイルのみで実行も数秒のため、常に検査する。
+#
+# actionlint は PATH 上の shellcheck / pyflakes を自動起動し、run: ブロックの
+# シェルスクリプトも検査する (ubuntu-latest には両方プリインストールされている)。
+# 本リポジトリに .sh は 1 つも無いため、独立した shellcheck ワークフローは持たない。
+on:
+  pull_request:
+    branches: [ main ]
+
+# 既定は無権限。必要な job にだけ最小権限を与える。
+permissions: {}
+
+# 同一 PR に連投された run のみ束ねて追い越しキャンセル
+concurrency:
+  group: actionlint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    # job 名がそのまま PR のチェック名になる (必須ステータスチェックの登録名)。変更しない。
+    name: "workflow 構文チェック"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: "Install actionlint"
+        shell: bash
+        env:
+          # renovate: datasource=github-release-attachments depName=rhysd/actionlint
+          VERSION: 1.7.12
+          SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          set -euo pipefail
+          ARCHIVE="actionlint_${VERSION}_linux_amd64.tar.gz"
+          curl -sSfL -o "$ARCHIVE" "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/${ARCHIVE}"
+
+          # SHA-256 検証（改ざん・破損を検知）
+          echo "${SHA256}  ${ARCHIVE}" | sha256sum -c -
+
+          sudo tar -xz -C /usr/local/bin -f "$ARCHIVE" actionlint
+          rm -f "$ARCHIVE"
+          actionlint --version
+
+      - name: "actionlint"
+        shell: bash
+        run: |
+          set -euo pipefail
+          # workflow command 形式で出力し、検出箇所を PR に annotation 表示する
+          actionlint -format $'{{range $err := .}}::error file={{$err.Filepath}},line={{$err.Line}},col={{$err.Column}}::{{$err.Message}}\n{{end}}'
