@@ -109,6 +109,8 @@ ignore = [
     "EM",
     # 著作権表記はファイル冒頭ではなくリポジトリ直下の LICENSE で一元管理する。
     "CPY001",
+    # 末尾カンマの有無は ruff format が決めるため、lint 側では見ない (両方有効だと競合する)。
+    "COM812",
 ]
 
 [tool.ruff.lint.per-file-ignores]
